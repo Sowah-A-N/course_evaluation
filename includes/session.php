@@ -1,9 +1,9 @@
 <?php
 /**
  * Session Management Functions
- * 
+ *
  * This file contains all session-related functions for the application.
- * 
+ *
  * Functions:
  * - start_secure_session() - Initialize session with secure settings
  * - check_login() - Verify user is logged in
@@ -18,7 +18,7 @@
  * - set_session_message() - Set flash message
  * - get_session_message() - Get and clear flash message
  * - update_last_activity() - Update session activity timestamp
- * 
+ *
  * USAGE:
  * Include this file at the top of pages that need session management
  * require_once 'includes/session.php';
@@ -31,10 +31,10 @@ if (!defined('SESSION_TIMEOUT')) {
 
 /**
  * Start Secure Session
- * 
+ *
  * Initializes a session with secure settings.
  * Call this at the beginning of every page that uses sessions.
- * 
+ *
  * @return bool True if session started successfully
  */
 function start_secure_session() {
@@ -42,10 +42,10 @@ function start_secure_session() {
     if (session_status() === PHP_SESSION_ACTIVE) {
         return true;
     }
-    
+
     // Set session name (makes it harder to identify the application)
     session_name(SESSION_NAME);
-    
+
     // Set session cookie parameters for security
     session_set_cookie_params([
         'lifetime' => SESSION_COOKIE_LIFETIME,
@@ -55,67 +55,67 @@ function start_secure_session() {
         'httponly' => SESSION_COOKIE_HTTPONLY,  // Prevent JavaScript access
         'samesite' => SESSION_COOKIE_SAMESITE   // CSRF protection
     ]);
-    
+
     // Start the session
     if (session_start()) {
         // Set last activity timestamp if not set
         if (!isset($_SESSION['last_activity'])) {
             $_SESSION['last_activity'] = time();
         }
-        
+
         // Set session start time if not set
         if (!isset($_SESSION['session_start'])) {
             $_SESSION['session_start'] = time();
         }
-        
+
         // Store user agent for validation (helps prevent session hijacking)
         if (!isset($_SESSION['user_agent'])) {
             $_SESSION['user_agent'] = $_SERVER['HTTP_USER_AGENT'] ?? 'Unknown';
         }
-        
+
         // Store IP address for validation (optional - can cause issues with dynamic IPs)
         if (!isset($_SESSION['ip_address'])) {
             $_SESSION['ip_address'] = $_SERVER['REMOTE_ADDR'] ?? 'Unknown';
         }
-        
+
         return true;
     }
-    
+
     return false;
 }
 
 /**
  * Check if User is Logged In
- * 
+ *
  * Verifies that user is authenticated and session is valid.
  * Redirects to login page if not logged in or session expired.
  * Call this at the top of protected pages.
- * 
+ *
  * @param bool $redirect Whether to redirect to login if not authenticated
  * @return bool True if logged in, false otherwise
  */
 function check_login($redirect = true) {
     // Ensure session is started
     start_secure_session();
-    
+
     // Check if user_id exists in session
     if (!isset($_SESSION['user_id']) || empty($_SESSION['user_id'])) {
         if ($redirect) {
             // Store current page for redirect after login
             $_SESSION['redirect_after_login'] = $_SERVER['REQUEST_URI'];
-            
+
             // Redirect to login
             header("Location: " . get_base_url() . "/login.php");
             exit();
         }
         return false;
     }
-    
+
     // Validate session timeout
     if (!check_session_timeout($redirect)) {
         return false;
     }
-    
+
     // Validate user agent (helps prevent session hijacking)
     if (isset($_SESSION['user_agent'])) {
         $current_user_agent = $_SERVER['HTTP_USER_AGENT'] ?? 'Unknown';
@@ -129,7 +129,7 @@ function check_login($redirect = true) {
             return false;
         }
     }
-    
+
     // Optional: Validate IP address (commented out - can cause issues with dynamic IPs)
     /*
     if (isset($_SESSION['ip_address'])) {
@@ -144,18 +144,18 @@ function check_login($redirect = true) {
         }
     }
     */
-    
+
     // Update last activity
     update_last_activity();
-    
+
     return true;
 }
 
 /**
  * Check Session Timeout
- * 
+ *
  * Validates that the session hasn't expired due to inactivity.
- * 
+ *
  * @param bool $redirect Whether to redirect to login if expired
  * @return bool True if session is valid, false if expired
  */
@@ -164,31 +164,31 @@ function check_session_timeout($redirect = true) {
     if (!isset($_SESSION['last_activity'])) {
         return true; // First time, allow it
     }
-    
+
     // Calculate time since last activity
     $inactive_time = time() - $_SESSION['last_activity'];
-    
+
     // Check if session has timed out
     if ($inactive_time > SESSION_TIMEOUT) {
         // Session expired
         logout_user();
-        
+
         if ($redirect) {
             header("Location: " . get_base_url() . "/login.php?error=session_expired");
             exit();
         }
         return false;
     }
-    
+
     return true;
 }
 
 /**
  * Check if User is Logged In (without redirect)
- * 
+ *
  * Simple check to see if user is authenticated.
  * Does not redirect or validate timeout.
- * 
+ *
  * @return bool True if logged in, false otherwise
  */
 function is_logged_in() {
@@ -198,7 +198,7 @@ function is_logged_in() {
 
 /**
  * Get Current User ID
- * 
+ *
  * @return int|null User ID if logged in, null otherwise
  */
 function get_user_id() {
@@ -207,7 +207,7 @@ function get_user_id() {
 
 /**
  * Get Current User Role ID
- * 
+ *
  * @return int|null Role ID if logged in, null otherwise
  */
 function get_user_role() {
@@ -216,7 +216,7 @@ function get_user_role() {
 
 /**
  * Get Current User Department ID
- * 
+ *
  * @return int|null Department ID if set, null otherwise
  */
 function get_user_department() {
@@ -225,7 +225,7 @@ function get_user_department() {
 
 /**
  * Get Current User Class ID
- * 
+ *
  * @return int|null Class ID if set, null otherwise
  */
 function get_user_class() {
@@ -234,7 +234,7 @@ function get_user_class() {
 
 /**
  * Get Current User Level ID
- * 
+ *
  * @return int|null Level ID if set, null otherwise
  */
 function get_user_level() {
@@ -243,7 +243,7 @@ function get_user_level() {
 
 /**
  * Get Current User's Full Name
- * 
+ *
  * @return string|null Full name if set, null otherwise
  */
 function get_user_name() {
@@ -252,7 +252,7 @@ function get_user_name() {
 
 /**
  * Get Current Username
- * 
+ *
  * @return string|null Username if set, null otherwise
  */
 function get_username() {
@@ -261,7 +261,7 @@ function get_username() {
 
 /**
  * Get Current User Email
- * 
+ *
  * @return string|null Email if set, null otherwise
  */
 function get_user_email() {
@@ -270,17 +270,17 @@ function get_user_email() {
 
 /**
  * Logout User
- * 
+ *
  * Destroys the session and clears all session data.
  * Does NOT redirect - call header() separately if needed.
  */
 function logout_user() {
     // Ensure session is started
     start_secure_session();
-    
+
     // Unset all session variables
     $_SESSION = array();
-    
+
     // Delete session cookie
     if (ini_get("session.use_cookies")) {
         $params = session_get_cookie_params();
@@ -294,17 +294,17 @@ function logout_user() {
             $params["httponly"]
         );
     }
-    
+
     // Destroy the session
     session_destroy();
 }
 
 /**
  * Regenerate Session ID
- * 
+ *
  * Regenerates the session ID to prevent session fixation attacks.
  * Call this after successful login or privilege escalation.
- * 
+ *
  * @param bool $delete_old_session Whether to delete the old session
  * @return bool True on success, false on failure
  */
@@ -314,7 +314,7 @@ function regenerate_session($delete_old_session = true) {
 
 /**
  * Update Last Activity Timestamp
- * 
+ *
  * Updates the session's last activity time.
  * This resets the session timeout counter.
  */
@@ -324,10 +324,10 @@ function update_last_activity() {
 
 /**
  * Set Flash Message
- * 
+ *
  * Stores a one-time message in the session.
  * Message will be displayed once and then cleared.
- * 
+ *
  * @param string $message The message to display
  * @param string $type Message type: 'success', 'error', 'warning', 'info'
  */
@@ -339,44 +339,44 @@ function set_session_message($message, $type = 'info') {
 
 /**
  * Get Flash Message
- * 
+ *
  * Retrieves and clears the flash message from session.
  * Returns null if no message exists.
- * 
+ *
  * @return array|null Array with 'message' and 'type' keys, or null
  */
 function get_session_message() {
     start_secure_session();
-    
+
     if (isset($_SESSION['flash_message'])) {
         $message = [
             'message' => $_SESSION['flash_message'],
             'type' => $_SESSION['flash_type'] ?? 'info'
         ];
-        
+
         // Clear the message
         unset($_SESSION['flash_message']);
         unset($_SESSION['flash_type']);
-        
+
         return $message;
     }
-    
+
     return null;
 }
 
 /**
  * Display Flash Message
- * 
+ *
  * Displays the flash message if one exists.
  * Automatically includes HTML styling.
  */
 function display_session_message() {
     $message = get_session_message();
-    
+
     if ($message !== null) {
         $type = htmlspecialchars($message['type']);
         $text = htmlspecialchars($message['message']);
-        
+
         // CSS classes for different message types
         $class_map = [
             'success' => 'alert-success',
@@ -384,9 +384,9 @@ function display_session_message() {
             'warning' => 'alert-warning',
             'info' => 'alert-info'
         ];
-        
+
         $class = $class_map[$type] ?? 'alert-info';
-        
+
         echo '<div class="alert ' . $class . '" role="alert">';
         echo $text;
         echo '</div>';
@@ -395,29 +395,29 @@ function display_session_message() {
 
 /**
  * Get Base URL
- * 
+ *
  * Helper function to get the application's base URL.
- * 
+ *
  * @return string Base URL
  */
 function get_base_url() {
     if (defined('APP_URL')) {
         return APP_URL;
     }
-    
+
     // Fallback: construct from server variables
-    $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http';
-    $host = $_SERVER['HTTP_HOST'];
-    $script = dirname($_SERVER['SCRIPT_NAME']);
-    
-    return $protocol . '://' . $host . $script;
+    // $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http';
+    // $host = $_SERVER['HTTP_HOST'];
+    // $script = dirname($_SERVER['SCRIPT_NAME']);
+
+    // return $protocol . '://' . $host . $script;
 }
 
 /**
  * Redirect to Login
- * 
+ *
  * Helper function to redirect to login page.
- * 
+ *
  * @param string $error Optional error message parameter
  */
 function redirect_to_login($error = '') {
@@ -431,18 +431,18 @@ function redirect_to_login($error = '') {
 
 /**
  * Redirect to Dashboard
- * 
+ *
  * Redirects user to their appropriate dashboard based on role.
  */
 function redirect_to_dashboard() {
     $role_id = get_user_role();
-    
+
     if ($role_id === null) {
         redirect_to_login();
     }
-    
+
     $base_url = get_base_url();
-    
+
     switch ($role_id) {
         case ROLE_ADMIN:
             header("Location: {$base_url}/admin/index.php");
@@ -459,6 +459,9 @@ function redirect_to_dashboard() {
         case ROLE_STUDENT:
             header("Location: {$base_url}/student/index.php");
             break;
+        case ROLE_QUALITY:
+            header("Location: {$base_url}/quality/index.php");
+            break;
         default:
             redirect_to_login('invalid_role');
     }
@@ -467,9 +470,9 @@ function redirect_to_dashboard() {
 
 /**
  * Get Session Age
- * 
+ *
  * Returns how long the current session has been active.
- * 
+ *
  * @return int|null Session age in seconds, or null if not set
  */
 function get_session_age() {
@@ -481,9 +484,9 @@ function get_session_age() {
 
 /**
  * Get Time Until Session Expires
- * 
+ *
  * Returns how many seconds until the session expires.
- * 
+ *
  * @return int|null Seconds until expiration, or null if not set
  */
 function get_time_until_expiration() {
@@ -496,10 +499,10 @@ function get_time_until_expiration() {
 
 /**
  * Is Session About to Expire
- * 
+ *
  * Checks if session will expire within the specified number of seconds.
  * Useful for displaying warnings to users.
- * 
+ *
  * @param int $seconds Warning threshold in seconds (default: 300 = 5 minutes)
  * @return bool True if session expires soon, false otherwise
  */
@@ -510,40 +513,40 @@ function is_session_expiring_soon($seconds = 300) {
 
 /**
  * USAGE EXAMPLES:
- * 
+ *
  * // At the top of every protected page:
  * require_once 'includes/session.php';
  * start_secure_session();
  * check_login();
- * 
+ *
  * // Get current user information:
  * $user_id = get_user_id();
  * $role_id = get_user_role();
  * $name = get_user_name();
- * 
+ *
  * // Set a success message after an action:
  * set_session_message('Record created successfully!', 'success');
  * header("Location: list.php");
- * 
+ *
  * // Display flash message on the next page:
  * display_session_message();
- * 
+ *
  * // Check if user is logged in without redirecting:
  * if (is_logged_in()) {
  *     echo "Welcome back!";
  * }
- * 
+ *
  * // Logout user:
  * logout_user();
  * header("Location: login.php");
- * 
+ *
  * // Regenerate session after login:
  * regenerate_session(true);
  */
 
 /**
  * SECURITY NOTES:
- * 
+ *
  * 1. Always call start_secure_session() before any output
  * 2. Call check_login() at the top of all protected pages
  * 3. Regenerate session ID after login with regenerate_session()

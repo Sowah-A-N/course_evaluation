@@ -2,10 +2,10 @@
 
 /**
  * Login Page
- * 
+ *
  * Handles user authentication and redirects to appropriate dashboard
  * based on user role.
- * 
+ *
  * Features:
  * - Username or email login
  * - Password verification
@@ -16,12 +16,13 @@
  * - Session security
  */
 
-// Start session
-session_start();
-
 // Include required files
 require_once 'config/database.php';
 require_once 'config/constants.php';
+require_once 'includes/session.php';
+
+// Start secure session
+start_secure_session();
 
 // If user is already logged in, redirect to appropriate dashboard
 if (isset($_SESSION['user_id']) && isset($_SESSION['role_id'])) {
@@ -79,20 +80,20 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             // For production, implement proper login attempt tracking in database
 
             // Prepare query to find user by username or email
-            $query = "SELECT 
-                        user_id, 
-                        username, 
-                        email, 
-                        password, 
-                        role_id, 
+            $query = "SELECT
+                        user_id,
+                        username,
+                        email,
+                        password,
+                        role_id,
                         department_id,
                         class_id,
                         level_id,
                         f_name,
                         l_name,
                         is_active
-                      FROM " . TABLE_USER_DETAILS . " 
-                      WHERE (username = ? OR email = ?) 
+                      FROM " . TABLE_USER_DETAILS . "
+                      WHERE (username = ? OR email = ?)
                       LIMIT 1";
 
             $stmt = mysqli_prepare($conn, $query);
@@ -119,11 +120,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         if (password_verify($password, $user['password'])) {
 
                             // Password is correct - Set session variables
-                            $_SESSION['user_id'] = $user['user_id'];
-                            $_SESSION['role_id'] = $user['role_id'];
-                            $_SESSION['department_id'] = $user['department_id'];
-                            $_SESSION['class_id'] = $user['class_id'];
-                            $_SESSION['level_id'] = $user['level_id'];
+                            $_SESSION['user_id'] = (int)$user['user_id'];
+                            $_SESSION['role_id'] = (int)$user['role_id'];  // Convert to integer!
+                            $_SESSION['department_id'] = $user['department_id'] ? (int)$user['department_id'] : null;
+                            $_SESSION['class_id'] = $user['class_id'] ? (int)$user['class_id'] : null;
+                            $_SESSION['level_id'] = $user['level_id'] ? (int)$user['level_id'] : null;
                             $_SESSION['username'] = $user['username'];
                             $_SESSION['email'] = $user['email'];
                             $_SESSION['full_name'] = $user['f_name'] . ' ' . $user['l_name'];

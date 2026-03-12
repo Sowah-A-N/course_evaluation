@@ -1,28 +1,36 @@
 <?php
+
+
 /**
  * Main Landing Page (index.php)
- * 
+ *
  * This is the entry point of the application.
- * 
+ *
  * Behavior:
  * - If user is logged in: Redirect to appropriate dashboard
  * - If user is not logged in: Redirect to login page
  * - If maintenance mode is enabled: Show maintenance message
  */
 
-// Start session
-session_start();
-
 // Include required files
 require_once 'config/constants.php';
+require_once 'includes/session.php';
+
+// Start secure session
+start_secure_session();
+
+echo "<pre>";
+print_r($_SESSION);
+exit();
 
 // Check if maintenance mode is enabled
 if (MAINTENANCE_MODE) {
     // Only allow admins during maintenance
     if (!isset($_SESSION['role_id']) || $_SESSION['role_id'] != ROLE_ADMIN) {
-        ?>
+?>
         <!DOCTYPE html>
         <html lang="en">
+
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -33,6 +41,7 @@ if (MAINTENANCE_MODE) {
                     padding: 0;
                     box-sizing: border-box;
                 }
+
                 body {
                     font-family: Arial, sans-serif;
                     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -42,6 +51,7 @@ if (MAINTENANCE_MODE) {
                     justify-content: center;
                     padding: 20px;
                 }
+
                 .maintenance-box {
                     background: white;
                     padding: 40px;
@@ -50,22 +60,26 @@ if (MAINTENANCE_MODE) {
                     text-align: center;
                     max-width: 500px;
                 }
+
                 .maintenance-box h1 {
                     color: #667eea;
                     margin-bottom: 20px;
                     font-size: 32px;
                 }
+
                 .maintenance-box p {
                     color: #666;
                     line-height: 1.6;
                     margin-bottom: 15px;
                 }
+
                 .icon {
                     font-size: 64px;
                     margin-bottom: 20px;
                 }
             </style>
         </head>
+
         <body>
             <div class="maintenance-box">
                 <div class="icon">🔧</div>
@@ -75,8 +89,9 @@ if (MAINTENANCE_MODE) {
                 <p><small>If you need urgent assistance, please contact the system administrator.</small></p>
             </div>
         </body>
+
         </html>
-        <?php
+<?php
         exit();
     }
 }
@@ -88,23 +103,27 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role_id'])) {
         case ROLE_ADMIN:
             header("Location: admin/index.php");
             exit();
-            
+
         case ROLE_HOD:
             header("Location: hod/index.php");
             exit();
-            
+
         case ROLE_SECRETARY:
             header("Location: secretary/index.php");
             exit();
-            
+
         case ROLE_ADVISOR:
             header("Location: advisor/index.php");
             exit();
-            
+
         case ROLE_STUDENT:
             header("Location: student/index.php");
             exit();
-            
+
+        case ROLE_QUALITY:
+            header("Location: quality/index.php");
+            exit();
+
         default:
             // Unknown role - logout and redirect to login
             session_destroy();

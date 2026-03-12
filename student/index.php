@@ -25,13 +25,18 @@ require_once '../includes/csrf.php';
 
 // Start session and check login
 start_secure_session();
+
+echo "<pre>";
+print_r($_SESSION);
+exit();
+
 check_login();
 
 // Check if user is a student
 if ($_SESSION['role_id'] != ROLE_STUDENT) {
     $_SESSION['flash_message'] = 'Access denied. This page is only for students.';
     $_SESSION['flash_type'] = 'error';
-    header("Location: ../login.php");
+    header("Location: ../index.php");
     exit();
 }
 

@@ -1,0 +1,271 @@
+<?php
+/**
+ * Secretary Students List
+ * 
+ * View all students in the secretary's department with search, filter, and export.
+ * 
+ * Features:
+ * - List all department students
+ * - Search by name, email, student ID
+ * - Filter by level, class, status
+ * - Export to CSV
+ * - Links to create, edit, delete
+ * - Department-scoped access
+ * 
+ * Role Required: ROLE_SECRETARY
+ */
+
+require_once '../../config/database.php';
+require_once '../../config/constants.php';
+require_once '../../includes/session.php';
+
+start_secure_session();
+check_login();
+
+if ($_SESSION['role_id'] != ROLE_SECRETARY) {
+    header("Location: ../../login.php");
+    exit();
+}
+
+$department_id = $_SESSION['department_id'];
+$page_title = 'Manage Students';
+
+// Get filters
+$filter_level = isset($_GET['level_id']) ? intval($_GET['level_id']) : 0;
+$filter_class = isset($_GET['class_id']) ? intval($_GET['class_id']) : 0;
+$filter_status = isset($_GET['status']) ? $_GET['status'] : 'all';
+$search = isset($_GET['search']) ? trim($_GET['search']) : '';
+
+// Get levels
+$levels = [];
+$result_levels = mysqli_query($conn, "SELECT * FROM level ORDER BY level_number");
+while ($row = mysqli_fetch_assoc($result_levels)) $levels[] = $row;
+
+// Get classes in department
+$query_classes = "SELECT * FROM classes WHERE department_id = ? ORDER BY class_name";
+$stmt_classes = mysqli_prepare($conn, $query_classes);
+mysqli_stmt_bind_param($stmt_classes, "i", $department_id);
+mysqli_stmt_execute($stmt_classes);
+$result_classes = mysqli_stmt_get_result($stmt_classes);
+$classes = [];
+while ($row = mysqli_fetch_assoc($result_classes)) $classes[] = $row;
+mysqli_stmt_close($stmt_classes);
+
+// Build query
+$where = ["u.department_id = ?", "u.role_id = ?"];
+$params = [$department_id, ROLE_STUDENT];
+$types = 'ii';
+
+if ($filter_level > 0) {
+    $where[] = "u.level_id = ?";
+    $params[] = $filter_level;
+    $types .= 'i';
+}
+if ($filter_class > 0) {
+    $where[] = "u.class_id = ?";
+    $params[] = $filter_class;
+    $types .= 'i';
+}
+if ($filter_status != 'all') {
+    $status_val = $filter_status == 'active' ? 1 : 0;
+    $where[] = "u.is_active = ?";
+    $params[] = $status_val;
+    $types .= 'i';
+}
+if (!empty($search)) {
+    $where[] = "(u.f_name LIKE ? OR u.l_name LIKE ? OR u.email LIKE ? OR u.unique_id LIKE ?)";
+    $search_param = "%$search%";
+    $params[] = $search_param;
+    $params[] = $search_param;
+    $params[] = $search_param;
+    $params[] = $search_param;
+    $types .= 'ssss';
+}
+
+$where_clause = implode(' AND ', $where);
+
+$query = "
+    SELECT 
+        u.user_id,
+        u.f_name,
+        u.l_name,
+        u.email,
+        u.unique_id,
+        u.is_active,
+        l.level_name,
+        c.class_name
+    FROM user_details u
+    LEFT JOIN level l ON u.level_id = l.t_id
+    LEFT JOIN classes c ON u.class_id = c.t_id
+    WHERE $where_clause
+    ORDER BY u.f_name, u.l_name
+";
+
+$stmt = mysqli_prepare($conn, $query);
+mysqli_stmt_bind_param($stmt, $types, ...$params);
+mysqli_stmt_execute($stmt);
+$result = mysqli_stmt_get_result($stmt);
+
+$students = [];
+while ($row = mysqli_fetch_assoc($result)) {
+    $students[] = $row;
+}
+mysqli_stmt_close($stmt);
+
+require_once '../../includes/header.php';
+?>
+
+<style>
+    .top-actions {display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;}
+    .filters-section {background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);}
+    .filters-grid {display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 15px;}
+    .filter-group label {font-size: 14px; font-weight: 500; margin-bottom: 5px; display: block;}
+    .filter-group select, .filter-group input {width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;}
+    .btn {padding: 10px 20px; border: none; border-radius: 5px; font-size: 14px; font-weight: 500; cursor: pointer; text-decoration: none; display: inline-block; transition: all 0.3s;}
+    .btn-primary {background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;}
+    .btn-secondary {background: #6c757d; color: white;}
+    .btn-success {background: #28a745; color: white;}
+    .btn-danger {background: #dc3545; color: white;}
+    .btn-sm {padding: 6px 12px; font-size: 12px;}
+    .students-table {background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);}
+    .students-table table {width: 100%; border-collapse: collapse;}
+    .students-table th {background: #f8f9fa; padding: 15px; text-align: left; font-weight: 600; border-bottom: 2px solid #e0e0e0;}
+    .students-table td {padding: 15px; border-bottom: 1px solid #f0f0f0;}
+    .students-table tr:hover {background: #f8f9fa;}
+    .status-badge {padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; text-transform: uppercase;}
+    .status-active {background: #d4edda; color: #155724;}
+    .status-inactive {background: #f8d7da; color: #721c24;}
+    .empty-state {text-align: center; padding: 60px 20px; background: white; border-radius: 8px;}
+</style>
+
+<div class="page-header">
+    <h1>Manage Students</h1>
+    <p>View and manage students in your department</p>
+</div>
+
+<div class="top-actions">
+    <div>
+        <a href="create.php" class="btn btn-primary">+ Add New Student</a>
+    </div>
+    <div style="color: #666; font-size: 14px;">
+        Total: <strong><?php echo count($students); ?></strong> student(s)
+    </div>
+</div>
+
+<div class="filters-section">
+    <form method="GET">
+        <div class="filters-grid">
+            <div class="filter-group">
+                <label>Level</label>
+                <select name="level_id">
+                    <option value="0">All Levels</option>
+                    <?php foreach ($levels as $level): ?>
+                        <option value="<?php echo $level['t_id']; ?>" <?php echo $filter_level == $level['t_id'] ? 'selected' : ''; ?>>
+                            <?php echo htmlspecialchars($level['level_name']); ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Class</label>
+                <select name="class_id">
+                    <option value="0">All Classes</option>
+                    <?php foreach ($classes as $class): ?>
+                        <option value="<?php echo $class['t_id']; ?>" <?php echo $filter_class == $class['t_id'] ? 'selected' : ''; ?>>
+                            <?php echo htmlspecialchars($class['class_name']); ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Status</label>
+                <select name="status">
+                    <option value="all" <?php echo $filter_status == 'all' ? 'selected' : ''; ?>>All</option>
+                    <option value="active" <?php echo $filter_status == 'active' ? 'selected' : ''; ?>>Active</option>
+                    <option value="inactive" <?php echo $filter_status == 'inactive' ? 'selected' : ''; ?>>Inactive</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Search</label>
+                <input type="text" name="search" placeholder="Name, email, or ID..." value="<?php echo htmlspecialchars($search); ?>">
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary">Apply Filters</button>
+        <a href="list.php" class="btn btn-secondary">Reset</a>
+        <button type="button" onclick="exportTableToCSV('students-table', 'students.csv')" class="btn btn-success">Export CSV</button>
+    </form>
+</div>
+
+<?php if (empty($students)): ?>
+    <div class="empty-state">
+        <div style="font-size: 80px; opacity: 0.3;">👥</div>
+        <h3>No Students Found</h3>
+        <p style="color: #666;">No students match your search criteria.</p>
+        <a href="create.php" class="btn btn-primary">Add First Student</a>
+    </div>
+<?php else: ?>
+    <div class="students-table">
+        <table id="students-table">
+            <thead>
+                <tr>
+                    <th>Student ID</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Level</th>
+                    <th>Class</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($students as $student): ?>
+                    <tr>
+                        <td><strong><?php echo htmlspecialchars($student['unique_id']); ?></strong></td>
+                        <td><?php echo htmlspecialchars($student['f_name'] . ' ' . $student['l_name']); ?></td>
+                        <td><?php echo htmlspecialchars($student['email']); ?></td>
+                        <td><?php echo htmlspecialchars($student['level_name']); ?></td>
+                        <td><?php echo htmlspecialchars($student['class_name']); ?></td>
+                        <td>
+                            <?php if ($student['is_active'] == 1): ?>
+                                <span class="status-badge status-active">Active</span>
+                            <?php else: ?>
+                                <span class="status-badge status-inactive">Inactive</span>
+                            <?php endif; ?>
+                        </td>
+                        <td>
+                            <a href="edit.php?id=<?php echo $student['user_id']; ?>" class="btn btn-primary btn-sm">Edit</a>
+                            <a href="delete.php?id=<?php echo $student['user_id']; ?>" class="btn btn-danger btn-sm" onclick="return confirm('Delete this student?')">Delete</a>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+    </div>
+<?php endif; ?>
+
+<script>
+function exportTableToCSV(tableId, filename) {
+    const table = document.getElementById(tableId);
+    let csv = [];
+    
+    for (let row of table.rows) {
+        let csvRow = [];
+        for (let cell of row.cells) {
+            if (row.cells.indexOf(cell) !== row.cells.length - 1) { // Skip Actions column
+                csvRow.push('"' + cell.innerText.replace(/"/g, '""') + '"');
+            }
+        }
+        csv.push(csvRow.join(','));
+    }
+    
+    const csvContent = csv.join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+}
+</script>
+
+<?php require_once '../../includes/footer.php'; ?>

@@ -2,7 +2,7 @@
 
 /**
  * Application Constants
- * 
+ *
  * This file contains all application-wide constants including:
  * - Role definitions
  * - System limits and thresholds
@@ -12,7 +12,7 @@
  * - Date/time formats
  * - Pagination settings
  * - Security settings
- * 
+ *
  * IMPORTANT: These are used throughout the application.
  * Changes here affect the entire system.
  */
@@ -27,7 +27,7 @@ define('ROLE_HOD', 2);          // Head of Department - department management
 define('ROLE_SECRETARY', 3);    // Department Secretary - read-only access
 define('ROLE_ADVISOR', 4);      // Class Advisor - class-level access
 define('ROLE_STUDENT', 5);      // Student - evaluation submission
-define('ROLE_QUALITY', 6);      //Qualtiy
+define('ROLE_QUALITY', 6);      // Quality Assurance - institution-wide reporting
 
 /**
  * Role Names (for display purposes)
@@ -38,7 +38,7 @@ define('ROLE_NAMES', [
     ROLE_SECRETARY => 'Secretary',
     ROLE_ADVISOR => 'Advisor',
     ROLE_STUDENT => 'Student',
-    ROLE_QUALITY => 'Quality'
+    ROLE_QUALITY => 'Quality Assurance'
 ]);
 
 // ============================================
@@ -499,35 +499,35 @@ if (DEBUG_MODE) {
 
 /**
  * HOW TO USE THESE CONSTANTS:
- * 
+ *
  * 1. Role checking:
  *    if ($_SESSION['role_id'] == ROLE_ADMIN) { ... }
- * 
+ *
  * 2. Response count filter:
  *    WHERE response_count >= MIN_RESPONSE_COUNT
- * 
+ *
  * 3. Session timeout:
  *    if (time() - $_SESSION['last_activity'] > SESSION_TIMEOUT) { ... }
- * 
+ *
  * 4. Display messages:
  *    echo MSG_SUCCESS_CREATED;
- * 
+ *
  * 5. Pagination:
  *    LIMIT $start, RECORDS_PER_PAGE
- * 
+ *
  * 6. Date formatting:
  *    date(DATE_FORMAT_DISPLAY, strtotime($date))
- * 
+ *
  * 7. File paths:
  *    require_once INCLUDES_DIR . '/session.php';
- * 
+ *
  * 8. URLs:
  *    <link rel="stylesheet" href="<?php echo CSS_URL; ?>/main.css">
  */
 
 /**
  * PRODUCTION DEPLOYMENT CHECKLIST:
- * 
+ *
  * [ ] Set DEBUG_MODE to FALSE
  * [ ] Set MAINTENANCE_MODE to FALSE (unless deploying)
  * [ ] Update APP_URL to production URL

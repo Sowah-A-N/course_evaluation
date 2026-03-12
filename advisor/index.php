@@ -1,10 +1,10 @@
 <?php
 /**
  * Advisor Dashboard
- * 
+ *
  * This is the main dashboard for Class Advisors.
  * Displays assigned classes, student statistics, and evaluation completion rates.
- * 
+ *
  * Features:
  * - Overview of assigned classes/levels
  * - Student count per class
@@ -12,7 +12,7 @@
  * - Recent evaluation activity
  * - Quick access to reports
  * - Advisor performance rating (how students rated the advisor)
- * 
+ *
  * Role Required: ROLE_ADVISOR
  */
 
@@ -30,7 +30,7 @@ check_login();
 if ($_SESSION['role_id'] != ROLE_ADVISOR) {
     $_SESSION['flash_message'] = 'Access denied. This page is only for advisors.';
     $_SESSION['flash_type'] = 'error';
-    header("Location: ../login.php");
+    header("Location: ../index.php");
     exit();
 }
 
@@ -57,7 +57,7 @@ if (!$active_period) {
 
 // Get advisor's assigned levels/classes
 $query_assigned = "
-    SELECT 
+    SELECT
         al.t_id,
         al.level_id,
         al.department_id,
@@ -86,13 +86,13 @@ $statistics = [];
 foreach ($assigned_levels as $level) {
     $level_id = $level['level_id'];
     $dept_id = $level['department_id'];
-    
+
     // Count total students in this level/department
     $query_students = "
         SELECT COUNT(*) as total_students
         FROM user_details
-        WHERE role_id = ? 
-        AND level_id = ? 
+        WHERE role_id = ?
+        AND level_id = ?
         AND department_id = ?
         AND is_active = 1
     ";
@@ -104,13 +104,13 @@ foreach ($assigned_levels as $level) {
     $student_data = mysqli_fetch_assoc($result_students);
     $total_students = $student_data['total_students'];
     mysqli_stmt_close($stmt_students);
-    
+
     // Count students who have completed at least one evaluation
     $query_completed = "
         SELECT COUNT(DISTINCT et.student_user_id) as completed_students
         FROM evaluation_tokens et
         JOIN user_details u ON et.student_user_id = u.user_id
-        WHERE u.level_id = ? 
+        WHERE u.level_id = ?
         AND u.department_id = ?
         AND et.is_used = 1
     ";
@@ -121,16 +121,16 @@ foreach ($assigned_levels as $level) {
     $completed_data = mysqli_fetch_assoc($result_completed);
     $completed_students = $completed_data['completed_students'];
     mysqli_stmt_close($stmt_completed);
-    
+
     // Calculate completion rate
     $completion_rate = $total_students > 0 ? round(($completed_students / $total_students) * 100, 1) : 0;
-    
+
     // Count total available evaluations for this level
     $query_available = "
         SELECT COUNT(DISTINCT et.token_id) as total_evaluations
         FROM evaluation_tokens et
         JOIN user_details u ON et.student_user_id = u.user_id
-        WHERE u.level_id = ? 
+        WHERE u.level_id = ?
         AND u.department_id = ?
     ";
     $stmt_available = mysqli_prepare($conn, $query_available);
@@ -140,13 +140,13 @@ foreach ($assigned_levels as $level) {
     $available_data = mysqli_fetch_assoc($result_available);
     $total_evaluations = $available_data['total_evaluations'];
     mysqli_stmt_close($stmt_available);
-    
+
     // Count completed evaluations
     $query_eval_completed = "
         SELECT COUNT(*) as completed_evaluations
         FROM evaluation_tokens et
         JOIN user_details u ON et.student_user_id = u.user_id
-        WHERE u.level_id = ? 
+        WHERE u.level_id = ?
         AND u.department_id = ?
         AND et.is_used = 1
     ";
@@ -157,10 +157,10 @@ foreach ($assigned_levels as $level) {
     $eval_completed_data = mysqli_fetch_assoc($result_eval_completed);
     $completed_evaluations = $eval_completed_data['completed_evaluations'];
     mysqli_stmt_close($stmt_eval_completed);
-    
+
     // Calculate evaluation completion rate
     $eval_completion_rate = $total_evaluations > 0 ? round(($completed_evaluations / $total_evaluations) * 100, 1) : 0;
-    
+
     $statistics[$level['level_id']] = [
         'total_students' => $total_students,
         'completed_students' => $completed_students,
@@ -177,7 +177,7 @@ $advisor_rating = null;
 $advisor_rating_count = 0;
 
 $query_advisor_rating = "
-    SELECT 
+    SELECT
         AVG(CAST(r.response_value AS DECIMAL(10,2))) as avg_rating,
         COUNT(r.id) as response_count
     FROM responses r
@@ -206,7 +206,7 @@ mysqli_stmt_close($stmt_rating);
 
 // Get recent evaluation activity (last 10 submissions from advisor's students)
 $query_recent = "
-    SELECT 
+    SELECT
         et.used_at,
         c.course_code,
         c.name as course_name,
@@ -247,7 +247,7 @@ require_once '../includes/header.php';
         gap: 20px;
         margin-bottom: 30px;
     }
-    
+
     .stat-card {
         background: white;
         border-radius: 8px;
@@ -255,35 +255,35 @@ require_once '../includes/header.php';
         box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         transition: transform 0.2s, box-shadow 0.2s;
     }
-    
+
     .stat-card:hover {
         transform: translateY(-5px);
         box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     }
-    
+
     .stat-card-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
         margin-bottom: 15px;
     }
-    
+
     .stat-icon {
         font-size: 36px;
     }
-    
+
     .stat-value {
         font-size: 36px;
         font-weight: bold;
         color: #667eea;
         margin-bottom: 5px;
     }
-    
+
     .stat-label {
         color: #666;
         font-size: 14px;
     }
-    
+
     .progress-bar-container {
         background: #e0e0e0;
         height: 8px;
@@ -291,13 +291,13 @@ require_once '../includes/header.php';
         overflow: hidden;
         margin-top: 10px;
     }
-    
+
     .progress-bar {
         height: 100%;
         background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
         transition: width 0.3s;
     }
-    
+
     .section-title {
         font-size: 20px;
         font-weight: 600;
@@ -306,7 +306,7 @@ require_once '../includes/header.php';
         padding-bottom: 10px;
         border-bottom: 2px solid #667eea;
     }
-    
+
     .level-card {
         background: white;
         border-radius: 8px;
@@ -314,46 +314,46 @@ require_once '../includes/header.php';
         box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         margin-bottom: 20px;
     }
-    
+
     .level-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
         margin-bottom: 15px;
     }
-    
+
     .level-name {
         font-size: 18px;
         font-weight: 600;
         color: #333;
     }
-    
+
     .level-stats {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
         gap: 15px;
         margin-top: 15px;
     }
-    
+
     .level-stat-item {
         text-align: center;
         padding: 15px;
         background: #f8f9fa;
         border-radius: 5px;
     }
-    
+
     .level-stat-value {
         font-size: 24px;
         font-weight: bold;
         color: #667eea;
     }
-    
+
     .level-stat-label {
         font-size: 12px;
         color: #666;
         margin-top: 5px;
     }
-    
+
     .activity-table {
         width: 100%;
         background: white;
@@ -361,12 +361,12 @@ require_once '../includes/header.php';
         overflow: hidden;
         box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
-    
+
     .activity-table table {
         width: 100%;
         border-collapse: collapse;
     }
-    
+
     .activity-table th {
         background: #f8f9fa;
         padding: 15px;
@@ -375,16 +375,16 @@ require_once '../includes/header.php';
         color: #333;
         border-bottom: 2px solid #e0e0e0;
     }
-    
+
     .activity-table td {
         padding: 12px 15px;
         border-bottom: 1px solid #f0f0f0;
     }
-    
+
     .activity-table tr:hover {
         background: #f8f9fa;
     }
-    
+
     .btn-primary {
         display: inline-block;
         padding: 10px 20px;
@@ -395,30 +395,30 @@ require_once '../includes/header.php';
         font-weight: 500;
         transition: transform 0.2s;
     }
-    
+
     .btn-primary:hover {
         transform: translateY(-2px);
     }
-    
+
     .rating-display {
         display: flex;
         align-items: center;
         gap: 10px;
         margin-top: 10px;
     }
-    
+
     .stars {
         color: #ffc107;
         font-size: 24px;
     }
-    
+
     .no-data {
         text-align: center;
         padding: 40px;
         color: #666;
         font-style: italic;
     }
-    
+
     .alert-info-custom {
         background: #d1ecf1;
         border: 1px solid #bee5eb;
@@ -432,7 +432,7 @@ require_once '../includes/header.php';
 <!-- Page Header -->
 <div class="page-header">
     <h1>Welcome, <?php echo htmlspecialchars($advisor_name); ?></h1>
-    <p>Class Advisor Dashboard - <?php echo htmlspecialchars($active_year); ?> 
+    <p>Class Advisor Dashboard - <?php echo htmlspecialchars($active_year); ?>
        <?php if ($active_semester): ?>
            (<?php echo htmlspecialchars($active_semester); ?>)
        <?php endif; ?>
@@ -459,12 +459,12 @@ require_once '../includes/header.php';
                 <div class="stat-icon">📚</div>
             </div>
         </div>
-        
+
         <!-- Total Students -->
         <div class="stat-card">
             <div class="stat-card-header">
                 <div>
-                    <?php 
+                    <?php
                     $total_all_students = array_sum(array_column($statistics, 'total_students'));
                     ?>
                     <div class="stat-value"><?php echo $total_all_students; ?></div>
@@ -473,15 +473,15 @@ require_once '../includes/header.php';
                 <div class="stat-icon">👥</div>
             </div>
         </div>
-        
+
         <!-- Evaluation Progress -->
         <div class="stat-card">
             <div class="stat-card-header">
                 <div>
-                    <?php 
+                    <?php
                     $total_all_evaluations = array_sum(array_column($statistics, 'total_evaluations'));
                     $total_completed_evaluations = array_sum(array_column($statistics, 'completed_evaluations'));
-                    $overall_completion = $total_all_evaluations > 0 ? 
+                    $overall_completion = $total_all_evaluations > 0 ?
                         round(($total_completed_evaluations / $total_all_evaluations) * 100, 1) : 0;
                     ?>
                     <div class="stat-value"><?php echo $overall_completion; ?>%</div>
@@ -493,7 +493,7 @@ require_once '../includes/header.php';
                 <div class="progress-bar" style="width: <?php echo $overall_completion; ?>%;"></div>
             </div>
         </div>
-        
+
         <!-- Advisor Rating -->
         <div class="stat-card">
             <div class="stat-card-header">
@@ -503,7 +503,7 @@ require_once '../includes/header.php';
                         <div class="stat-label">Your Advisor Rating</div>
                         <div class="rating-display">
                             <div class="stars">
-                                <?php 
+                                <?php
                                 $full_stars = floor($advisor_rating);
                                 $half_star = ($advisor_rating - $full_stars) >= 0.5;
                                 for ($i = 0; $i < $full_stars; $i++) echo '⭐';
@@ -525,9 +525,9 @@ require_once '../includes/header.php';
 
     <!-- Assigned Levels Details -->
     <h2 class="section-title">Your Assigned Classes</h2>
-    
+
     <?php foreach ($assigned_levels as $level): ?>
-        <?php 
+        <?php
         $level_id = $level['level_id'];
         $stats = $statistics[$level_id];
         ?>
@@ -535,7 +535,7 @@ require_once '../includes/header.php';
             <div class="level-header">
                 <div>
                     <div class="level-name">
-                        <?php echo htmlspecialchars($level['level_name']); ?> - 
+                        <?php echo htmlspecialchars($level['level_name']); ?> -
                         <?php echo htmlspecialchars($level['dep_name']); ?>
                     </div>
                     <small style="color: #666;">Department Code: <?php echo htmlspecialchars($level['dep_code']); ?></small>
@@ -546,23 +546,23 @@ require_once '../includes/header.php';
                     </a>
                 </div>
             </div>
-            
+
             <div class="level-stats">
                 <div class="level-stat-item">
                     <div class="level-stat-value"><?php echo $stats['total_students']; ?></div>
                     <div class="level-stat-label">Total Students</div>
                 </div>
-                
+
                 <div class="level-stat-item">
                     <div class="level-stat-value"><?php echo $stats['completed_students']; ?></div>
                     <div class="level-stat-label">Active Students</div>
                 </div>
-                
+
                 <div class="level-stat-item">
                     <div class="level-stat-value"><?php echo $stats['completion_rate']; ?>%</div>
                     <div class="level-stat-label">Student Participation</div>
                 </div>
-                
+
                 <div class="level-stat-item">
                     <div class="level-stat-value">
                         <?php echo $stats['completed_evaluations']; ?>/<?php echo $stats['total_evaluations']; ?>
@@ -570,7 +570,7 @@ require_once '../includes/header.php';
                     <div class="level-stat-label">Evaluations Completed</div>
                 </div>
             </div>
-            
+
             <div class="progress-bar-container" style="margin-top: 15px;">
                 <div class="progress-bar" style="width: <?php echo $stats['eval_completion_rate']; ?>%;"></div>
             </div>
@@ -582,7 +582,7 @@ require_once '../includes/header.php';
 
     <!-- Recent Activity -->
     <h2 class="section-title" style="margin-top: 40px;">Recent Evaluation Activity</h2>
-    
+
     <?php if (empty($recent_activities)): ?>
         <div class="activity-table">
             <div class="no-data">No recent evaluation activity</div>
@@ -607,7 +607,7 @@ require_once '../includes/header.php';
                             </td>
                             <td><?php echo htmlspecialchars($activity['level_name']); ?></td>
                             <td>
-                                <strong><?php echo htmlspecialchars($activity['course_code']); ?></strong> - 
+                                <strong><?php echo htmlspecialchars($activity['course_code']); ?></strong> -
                                 <?php echo htmlspecialchars($activity['course_name']); ?>
                             </td>
                         </tr>
@@ -619,7 +619,7 @@ require_once '../includes/header.php';
 
     <!-- Quick Actions -->
     <h2 class="section-title" style="margin-top: 40px;">Quick Actions</h2>
-    
+
     <div class="dashboard-grid">
         <div class="stat-card">
             <h3 style="margin-bottom: 15px; color: #333;">📊 Reports</h3>
@@ -628,7 +628,7 @@ require_once '../includes/header.php';
             </p>
             <a href="reports/class_report.php" class="btn-primary">View Class Reports</a>
         </div>
-        
+
         <div class="stat-card">
             <h3 style="margin-bottom: 15px; color: #333;">✅ Completion Status</h3>
             <p style="color: #666; margin-bottom: 15px; font-size: 14px;">
@@ -636,7 +636,7 @@ require_once '../includes/header.php';
             </p>
             <a href="reports/completion_report.php" class="btn-primary">Completion Report</a>
         </div>
-        
+
         <div class="stat-card">
             <h3 style="margin-bottom: 15px; color: #333;">👥 Student List</h3>
             <p style="color: #666; margin-bottom: 15px; font-size: 14px;">

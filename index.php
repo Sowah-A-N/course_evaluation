@@ -19,10 +19,6 @@ require_once 'includes/session.php';
 // Start secure session
 start_secure_session();
 
-echo "<pre>";
-print_r($_SESSION);
-exit();
-
 // Check if maintenance mode is enabled
 if (MAINTENANCE_MODE) {
     // Only allow admins during maintenance

@@ -406,11 +406,11 @@ function get_base_url() {
     }
 
     // Fallback: construct from server variables
-    // $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http';
-    // $host = $_SERVER['HTTP_HOST'];
-    // $script = dirname($_SERVER['SCRIPT_NAME']);
+    $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http';
+    $host = $_SERVER['HTTP_HOST'];
+    $script = dirname($_SERVER['SCRIPT_NAME']);
 
-    // return $protocol . '://' . $host . $script;
+    return rtrim($protocol . '://' . $host . $script, '/');
 }
 
 /**

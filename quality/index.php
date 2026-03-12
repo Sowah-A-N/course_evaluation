@@ -27,19 +27,7 @@ require_once '../includes/csrf.php';
 // Start session and check login
 start_secure_session();
 
-echo "<pre>";
-print_r($_SESSION);
-exit();
-
 check_login();
-echo $_SESSION['role_id'];
-
-// Check if user has quality assurance role
-// Note: Adjust role check based on your system
-// For now, allowing admin or creating a quality role constant
-if (!defined('ROLE_QUALITY')) {
-    define('ROLE_QUALITY', 6); // Define if not in constants
-}
 
 // Allow both admin and quality roles
 if ($_SESSION['role_id'] != ROLE_ADMIN && $_SESSION['role_id'] != ROLE_QUALITY) {

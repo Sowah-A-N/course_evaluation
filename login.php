@@ -43,6 +43,9 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role_id'])) {
         case ROLE_STUDENT:
             header("Location: student/index.php");
             exit();
+        case ROLE_QUALITY:
+            header("Location: quality/index.php");
+            exit();
         default:
             // Unknown role, logout
             session_destroy();
@@ -137,7 +140,22 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                             // Log successful login (optional - requires audit_logs implementation)
                             // log_audit($conn, $user['user_id'], AUDIT_LOGIN, null, null, null, null);
 
-                            // Redirect based on role
+                            // Redirect to the page the user originally tried to access,
+                            // if it is a safe relative path within this application.
+                            if (
+                                isset($_SESSION['redirect_after_login']) &&
+                                !empty($_SESSION['redirect_after_login']) &&
+                                strpos($_SESSION['redirect_after_login'], '://') === false &&
+                                strpos($_SESSION['redirect_after_login'], '//') !== 0
+                            ) {
+                                $redirect_url = $_SESSION['redirect_after_login'];
+                                unset($_SESSION['redirect_after_login']);
+                                header("Location: " . $redirect_url);
+                                exit();
+                            }
+                            unset($_SESSION['redirect_after_login']);
+
+                            // Default: redirect based on role
                             switch ($user['role_id']) {
                                 case ROLE_ADMIN:
                                     header("Location: admin/index.php");
@@ -153,6 +171,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                                     exit();
                                 case ROLE_STUDENT:
                                     header("Location: student/index.php");
+                                    exit();
+                                case ROLE_QUALITY:
+                                    header("Location: quality/index.php");
                                     exit();
                                 default:
                                     $error = "Invalid user role. Please contact administrator.";

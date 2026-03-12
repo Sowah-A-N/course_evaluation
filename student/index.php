@@ -26,10 +26,6 @@ require_once '../includes/csrf.php';
 // Start session and check login
 start_secure_session();
 
-echo "<pre>";
-print_r($_SESSION);
-exit();
-
 check_login();
 
 // Check if user is a student

@@ -96,9 +96,9 @@ foreach ($assigned_levels as $level) {
         AND department_id = ?
         AND is_active = 1
     ";
+    $student_role = ROLE_STUDENT;
     $stmt_students = mysqli_prepare($conn, $query_students);
     mysqli_stmt_bind_param($stmt_students, "iii", $student_role, $level_id, $dept_id);
-    $student_role = ROLE_STUDENT;
     mysqli_stmt_execute($stmt_students);
     $result_students = mysqli_stmt_get_result($stmt_students);
     $student_data = mysqli_fetch_assoc($result_students);

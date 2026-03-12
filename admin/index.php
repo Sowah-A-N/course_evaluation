@@ -1,17 +1,10 @@
 <?php
-session_start();
+require_once __DIR__ . '/../config/constants.php';
+require_once __DIR__ . '/../includes/session.php';
 
-// Fallback demo data (remove in production)
-$_SESSION['user_id']      = $_SESSION['user_id']      ?? 101;
-$_SESSION['role_id']      = $_SESSION['role_id']      ?? 2;
-$_SESSION['department_id'] = $_SESSION['department_id'] ?? 5;
-$_SESSION['class_id']     = $_SESSION['class_id']     ?? 3;
-$_SESSION['level_id']     = $_SESSION['level_id']     ?? 1;
-$_SESSION['username']     = $_SESSION['username']     ?? "creative_user";
-$_SESSION['email']        = $_SESSION['email']        ?? "user@email.com";
-$_SESSION['full_name']    = $_SESSION['full_name']    ?? "John Doe";
-$_SESSION['last_activity'] = $_SESSION['last_activity'] ?? time();
-$_SESSION['login_time']   = $_SESSION['login_time']   ?? time();
+// Start session and enforce authentication
+start_secure_session();
+check_login();
 
 function safe($value)
 {

@@ -47,8 +47,10 @@ $page_title = 'Evaluation Completion Report';
 // Get filter parameters
 $filter_level = isset($_GET['level_id']) ? intval($_GET['level_id']) : 0;
 $filter_class = isset($_GET['class_id']) ? intval($_GET['class_id']) : 0;
-$filter_status = isset($_GET['status']) ? $_GET['status'] : 'all'; // all, complete, incomplete, not_started
-$sort_by = isset($_GET['sort']) ? $_GET['sort'] : 'name';
+$allowed_statuses = ['all', 'complete', 'incomplete', 'not_started'];
+$filter_status = isset($_GET['status']) && in_array($_GET['status'], $allowed_statuses) ? $_GET['status'] : 'all';
+$allowed_sorts = ['name', 'level', 'class', 'completion', 'status'];
+$sort_by = isset($_GET['sort']) && in_array($_GET['sort'], $allowed_sorts) ? $_GET['sort'] : 'name';
 $sort_order = isset($_GET['order']) && $_GET['order'] == 'desc' ? 'DESC' : 'ASC';
 
 // Get advisor's assigned levels

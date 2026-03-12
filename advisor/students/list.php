@@ -45,7 +45,8 @@ $page_title = 'My Students';
 // Get filter parameters
 $filter_level = isset($_GET['level_id']) ? intval($_GET['level_id']) : 0;
 $search_query = isset($_GET['search']) ? trim($_GET['search']) : '';
-$sort_by = isset($_GET['sort']) ? $_GET['sort'] : 'name';
+$allowed_sorts = ['name', 'level', 'class', 'email', 'status', 'completion'];
+$sort_by = isset($_GET['sort']) && in_array($_GET['sort'], $allowed_sorts) ? $_GET['sort'] : 'name';
 $sort_order = isset($_GET['order']) && $_GET['order'] == 'desc' ? 'DESC' : 'ASC';
 
 // Get advisor's assigned levels

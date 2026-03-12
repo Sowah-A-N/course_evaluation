@@ -307,7 +307,19 @@ function get_csrf_token_json()
 function validate_csrf_ajax()
 {
     // Try to get token from request header
-    $headers = getallheaders();
+    // getallheaders() is not available in all SAPI environments (e.g. FastCGI),
+    // so fall back to reading directly from $_SERVER.
+    if (function_exists('getallheaders')) {
+        $headers = getallheaders();
+    } else {
+        $headers = [];
+        foreach ($_SERVER as $key => $value) {
+            if (strncmp($key, 'HTTP_', 5) === 0) {
+                $header = str_replace('_', '-', substr($key, 5));
+                $headers[$header] = $value;
+            }
+        }
+    }
     if (isset($headers['X-CSRF-Token'])) {
         return validate_csrf_token($headers['X-CSRF-Token']);
     }

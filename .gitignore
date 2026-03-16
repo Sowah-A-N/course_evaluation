@@ -1,2 +1,6 @@
 database.php
 **/database.php
+/storage/logs
+/vendor
+.env
+course_evaluation.sql

@@ -53,7 +53,7 @@ $query_stats = "
 
 $stmt_stats = mysqli_prepare($conn, $query_stats);
 $role_student = ROLE_STUDENT;
-$role_lecturer = ROLE_ADVISOR;
+$role_lecturer = ROLE_LECTURER;
 mysqli_stmt_bind_param($stmt_stats, "iiiiii",
     $department_id, $role_student,
     $department_id, $role_lecturer,

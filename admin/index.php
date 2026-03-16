@@ -51,7 +51,7 @@ $query_stats = "
 
 $stmt_stats = mysqli_prepare($conn, $query_stats);
 $role_student = ROLE_STUDENT;
-$role_lecturer = ROLE_LECTURER;
+$role_lecturer = ROLE_ADVISOR;
 mysqli_stmt_bind_param($stmt_stats, "ii", $role_student, $role_lecturer);
 mysqli_stmt_execute($stmt_stats);
 $stats = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt_stats));

@@ -23,9 +23,18 @@
  * require_once 'includes/csrf.php';
  */
 
-// Ensure session is started before using CSRF functions
+// Ensure session is started before using CSRF functions.
+// Use start_secure_session() if available (session.php already included),
+// so the correct session name (COURSE_EVAL_SESSION) and secure cookie
+// params are applied. Falling back to a bare session_start() would open
+// the default PHPSESSID session instead, which has no login data and
+// causes an infinite redirect loop between login.php and the dashboards.
 if (session_status() === PHP_SESSION_NONE) {
-    session_start();
+    if (function_exists('start_secure_session')) {
+        start_secure_session();
+    } else {
+        session_start();
+    }
 }
 
 // Load constants if not already loaded

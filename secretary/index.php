@@ -19,14 +19,14 @@ require_once '../config/constants.php';
 require_once '../includes/session.php';
 
 start_secure_session();
-//check_login();
+check_login();
 
-// if ($_SESSION['role_id'] != ROLE_SECRETARY) {
-//     $_SESSION['flash_message'] = 'Access denied. This page is only for department secretaries.';
-//     $_SESSION['flash_type'] = 'error';
-//     header("Location: ../login.php");
-//     exit();
-// }
+if ($_SESSION['role_id'] != ROLE_SECRETARY) {
+    $_SESSION['flash_message'] = 'Access denied. This page is only for department secretaries.';
+    $_SESSION['flash_type'] = 'error';
+    header("Location: ../index.php");
+    exit();
+}
 
 $secretary_id = $_SESSION['user_id'];
 $department_id = $_SESSION['department_id'];

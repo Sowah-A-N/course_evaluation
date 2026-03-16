@@ -52,8 +52,11 @@ $department = mysqli_fetch_assoc($result_dept);
 mysqli_stmt_close($stmt_dept);
 
 if (!$department) {
-    $_SESSION['flash_message'] = 'Department not found.';
-    $_SESSION['flash_type'] = 'error';
+    // Log the user out before redirecting to login.php.
+    // Without logout, login.php would redirect the HOD straight back here,
+    // creating an infinite redirect loop.
+    logout_user();
+    set_session_message('Your department could not be found. Please contact the system administrator.', 'error');
     header("Location: ../login.php");
     exit();
 }
